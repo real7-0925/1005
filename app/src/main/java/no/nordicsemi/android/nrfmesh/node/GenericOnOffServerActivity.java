@@ -70,6 +70,10 @@ public class GenericOnOffServerActivity extends ModelConfigurationActivity {
     protected int mTransitionStepResolution;
     protected int mTransitionSteps;
 
+    //add
+    private Button btHigh;
+
+
 //    private static final String TAG = "Faces";
 
     private String mPath = "/storage/emulated/0/Detectface";//設置的照片位址
@@ -86,6 +90,7 @@ public class GenericOnOffServerActivity extends ModelConfigurationActivity {
         mSwipe.setOnRefreshListener(this);
         final MeshModel model = mViewModel.getSelectedModel().getValue();
         if (model instanceof GenericOnOffServerModel) {
+            //button的binding
             final LayoutGenericOnOffBinding nodeControlsContainer = LayoutGenericOnOffBinding.inflate(getLayoutInflater(), binding.nodeControlsContainer, true);
             final TextView time = nodeControlsContainer.transitionTime;
             onOffState = nodeControlsContainer.onOffState;
@@ -103,6 +108,7 @@ public class GenericOnOffServerActivity extends ModelConfigurationActivity {
             delaySlider.setStepSize(1);
             final TextView delayTime = nodeControlsContainer.delayTime;
 
+            //控制button的ON/OFF
             mActionOnOff = nodeControlsContainer.actionOn;
             mActionOnOff.setOnClickListener(v -> {
                 try {
@@ -277,11 +283,38 @@ public class GenericOnOffServerActivity extends ModelConfigurationActivity {
                     updateSubscriptionUi(meshModel);
                 }
             });
+
+
+            //相機
+            setContentView(R.layout.layout_generic_on_off);
+            //Button btHigh = findViewById(R.id.buttonHigh);
+            //取得相機權限
+            if (checkSelfPermission(Manifest.permission.CAMERA)!= PackageManager.PERMISSION_GRANTED)
+                requestPermissions(new String[]{Manifest.permission.CAMERA},CAMERA_PERMISSION);
+            /**按下照相之拍攝按鈕*/
+            btHigh = nodeControlsContainer.buttonHigh;
+                    btHigh.setOnClickListener(v->{
+                        Intent highIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                        //檢查是否已取得權限
+                        if (highIntent.resolveActivity(getPackageManager()) == null) return;
+                        //取得相片檔案的URI位址及設定檔案名稱
+                        File imageFile = getImageFile();
+                        if (imageFile == null) return;
+                        //取得相片檔案的URI位址
+                        Uri imageUri = FileProvider.getUriForFile(
+                                this,
+                                "com.jetec.cameraexample.CameraEx",//記得要跟AndroidManifest.xml中的authorities 一致
+                                imageFile
+                        );
+                        highIntent.putExtra(MediaStore.EXTRA_OUTPUT,imageUri);
+                        startActivityForResult(highIntent,REQUEST_HIGH_IMAGE);//開啟相機
+                    });
+
         }
 
 
         //add by myself
-        setContentView(R.layout.layout_generic_on_off);
+//        setContentView(R.layout.layout_generic_on_off);
         try {
             Amplify.addPlugin(new AWSCognitoAuthPlugin());//without credential log in
             Amplify.addPlugin(new AWSPredictionsPlugin());//rekognition translate polly high level client
@@ -318,28 +351,7 @@ public class GenericOnOffServerActivity extends ModelConfigurationActivity {
         ScheduledThreadPoolExecutor executor = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(0);
         executor.scheduleWithFixedDelay(task, 1, 300, TimeUnit.SECONDS);
 
-        //相機
-        Button btHigh = findViewById(R.id.buttonHigh);
-        //取得相機權限
-        if (checkSelfPermission(Manifest.permission.CAMERA)!= PackageManager.PERMISSION_GRANTED)
-            requestPermissions(new String[]{Manifest.permission.CAMERA},CAMERA_PERMISSION);
-        /**按下照相之拍攝按鈕*/
-        btHigh.setOnClickListener(v->{
-            Intent highIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            //檢查是否已取得權限
-            if (highIntent.resolveActivity(getPackageManager()) == null) return;
-            //取得相片檔案的URI位址及設定檔案名稱
-            File imageFile = getImageFile();
-            if (imageFile == null) return;
-            //取得相片檔案的URI位址
-            Uri imageUri = FileProvider.getUriForFile(
-                    this,
-                    "com.jetec.cameraexample.CameraEx",//記得要跟AndroidManifest.xml中的authorities 一致
-                    imageFile
-            );
-            highIntent.putExtra(MediaStore.EXTRA_OUTPUT,imageUri);
-            startActivityForResult(highIntent,REQUEST_HIGH_IMAGE);//開啟相機
-        });
+
     }
 
     /**取得相片檔案的URI位址及設定檔案名稱*/
@@ -397,55 +409,55 @@ public class GenericOnOffServerActivity extends ModelConfigurationActivity {
 
 
 
-        //滑桿
-        Slider slider1 = (Slider) findViewById(R.id.seekbar_Red);
-        Slider slider2 = (Slider) findViewById(R.id.seekbar_Green);
-        Slider slider3 = (Slider) findViewById(R.id.seekbar_Blue);
-
-//        slider1.showContextMenu();// 设置推动时显示指示器
-//        slider2.showContextMenu();
-//        slider3.showContextMenu();
-
-        slider1.setTrackTintList(ColorStateList.valueOf(0xFF881515));// 滑軌底色
-        slider2.setTrackTintList(ColorStateList.valueOf(0xFF308014));
-        slider3.setTrackTintList(ColorStateList.valueOf(0xFF3D59AB));
-
-        slider1.setValue(0);// 设定初始进度
-        slider2.setValue(0);
-        slider3.setValue(0);
-
-        slider1.setValueTo(255);// 设定最终进度
-        slider2.setValueTo(255);
-        slider3.setValueTo(255);
-
-        slider1.setHaloTintList(ColorStateList.valueOf(0xFFFF0000));// 设定光環顔色
-        slider2.setHaloTintList(ColorStateList.valueOf(0xFF00FF00));
-        slider3.setHaloTintList(ColorStateList.valueOf(0xFF0000FF));
-
-        slider1.setThumbTintList(ColorStateList.valueOf(0xFFFFFAFA));// 设定滑塊顔色
-        slider2.setThumbTintList(ColorStateList.valueOf(0xFFFFFAFA));
-        slider3.setThumbTintList(ColorStateList.valueOf(0xFFFFFAFA));
-
-        slider1.setTrackActiveTintList(ColorStateList.valueOf(0xFFE3170D));//設置軌道活動部分顔色
-        slider2.setTrackActiveTintList(ColorStateList.valueOf(0xFF32CD32));
-        slider3.setTrackActiveTintList(ColorStateList.valueOf(0xFF1E90FF));
-
-        slider1.setTrackHeight(20);//設置軌道寬度
-        slider2.setTrackHeight(20);
-        slider3.setTrackHeight(20);
-//        slider1.setBackgroundColor(getResources().getColor(R.color.red));// 背景颜色// 监听进度
-//        slider1.setOnValueChangedListener(new OnValueChangedListener() {
+//        //滑桿
+//        Slider slider1 = (Slider) findViewById(R.id.seekbar_Red);
+//        Slider slider2 = (Slider) findViewById(R.id.seekbar_Green);
+//        Slider slider3 = (Slider) findViewById(R.id.seekbar_Blue);
 //
-//            @Override
-//            public void onValueChanged(int value) {
-//                // TODO 自动生成的方法存根
-//                System.out.println("now value = "+ value);
-//            }
-//        });
-
-        slider1.setThumbElevation(30);// 设置滑块的影子大小
-        slider2.setThumbElevation(30);// 设置滑块的影子大小
-        slider3.setThumbElevation(30);// 设置滑块的影子大小
+////        slider1.showContextMenu();// 设置推动时显示指示器
+////        slider2.showContextMenu();
+////        slider3.showContextMenu();
+//
+//        slider1.setTrackTintList(ColorStateList.valueOf(0xFF881515));// 滑軌底色
+//        slider2.setTrackTintList(ColorStateList.valueOf(0xFF308014));
+//        slider3.setTrackTintList(ColorStateList.valueOf(0xFF3D59AB));
+//
+//        slider1.setValue(0);// 设定初始进度
+//        slider2.setValue(0);
+//        slider3.setValue(0);
+//
+//        slider1.setValueTo(255);// 设定最终进度
+//        slider2.setValueTo(255);
+//        slider3.setValueTo(255);
+//
+//        slider1.setHaloTintList(ColorStateList.valueOf(0xFFFF0000));// 设定光環顔色
+//        slider2.setHaloTintList(ColorStateList.valueOf(0xFF00FF00));
+//        slider3.setHaloTintList(ColorStateList.valueOf(0xFF0000FF));
+//
+//        slider1.setThumbTintList(ColorStateList.valueOf(0xFFFFFAFA));// 设定滑塊顔色
+//        slider2.setThumbTintList(ColorStateList.valueOf(0xFFFFFAFA));
+//        slider3.setThumbTintList(ColorStateList.valueOf(0xFFFFFAFA));
+//
+//        slider1.setTrackActiveTintList(ColorStateList.valueOf(0xFFE3170D));//設置軌道活動部分顔色
+//        slider2.setTrackActiveTintList(ColorStateList.valueOf(0xFF32CD32));
+//        slider3.setTrackActiveTintList(ColorStateList.valueOf(0xFF1E90FF));
+//
+//        slider1.setTrackHeight(20);//設置軌道寬度
+//        slider2.setTrackHeight(20);
+//        slider3.setTrackHeight(20);
+////        slider1.setBackgroundColor(getResources().getColor(R.color.red));// 背景颜色// 监听进度
+////        slider1.setOnValueChangedListener(new OnValueChangedListener() {
+////
+////            @Override
+////            public void onValueChanged(int value) {
+////                // TODO 自动生成的方法存根
+////                System.out.println("now value = "+ value);
+////            }
+////        });
+//
+//        slider1.setThumbElevation(30);// 设置滑块的影子大小
+//        slider2.setThumbElevation(30);// 设置滑块的影子大小
+//        slider3.setThumbElevation(30);// 设置滑块的影子大小
     }
 
     class Task implements Runnable {
